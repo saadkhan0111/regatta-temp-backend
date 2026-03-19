@@ -71,15 +71,12 @@
 'use strict';
 
 const express = require('express');
-const bcrypt  = require('bcryptjs');
-const jwt     = require('jsonwebtoken');
-const multer  = require('multer');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { User, Club, Regatta, Race, EloHistory, Campaign, Supporter, ErgSession, BoatBay } = require('../models/index');
 const { ingest, ingestCSV } = require('../services/dataAggregator');
 const { processRace, computeSpeedOrder } = require('../services/eloEngine');
 const campaignService = require('../services/campaignService');
-
-const upload = multer({ dest: process.env.UPLOAD_DIR || './uploads', limits: { fileSize: 25 * 1024 * 1024 } });
 
 // ── AUTH MIDDLEWARE ─────────────────────────────────────────────
 function auth(req, res, next) {
@@ -95,7 +92,7 @@ function auth(req, res, next) {
 
 function adminAuth(req, res, next) {
   auth(req, res, () => {
-    if (!['club_admin','super_admin'].includes(req.user.role))
+    if (!['club_admin', 'super_admin'].includes(req.user.role))
       return res.status(403).json({ error: 'Insufficient permissions' });
     next();
   });
@@ -227,7 +224,7 @@ regattasRouter.get('/', async (req, res, next) => {
     if (from || to) {
       filter.date = {};
       if (from) filter.date.$gte = new Date(from);
-      if (to)   filter.date.$lte = new Date(to);
+      if (to) filter.date.$lte = new Date(to);
     }
     const regattas = await Regatta.find(filter).sort({ date: -1 }).limit(Number(limit)).skip(Number(skip));
     res.json(regattas);
@@ -254,8 +251,8 @@ racesRouter.get('/', async (req, res, next) => {
     const filter = {};
     if (regattaId) filter.regattaId = regattaId;
     if (boatClass) filter.boatClass = boatClass;
-    if (gender)    filter.gender = gender;
-    if (clubId)    filter['results.clubId'] = clubId;
+    if (gender) filter.gender = gender;
+    if (clubId) filter['results.clubId'] = clubId;
     const races = await Race.find(filter).populate('regattaId', 'name date location timingPartner').sort({ raceDate: -1 });
     res.json(races);
   } catch (e) { next(e); }
@@ -388,15 +385,17 @@ supportersRouter.post('/import', auth, upload.single('csv'), async (req, res, ne
     const ops = records.map(r => ({
       updateOne: {
         filter: { clubId: req.body.clubId, email: (r.email || r.Email || '').toLowerCase() },
-        update: { $set: {
-          clubId: req.body.clubId,
-          email: (r.email || r.Email || '').toLowerCase(),
-          firstName: r.first_name || r.FirstName || r.firstName || '',
-          lastName: r.last_name || r.LastName || r.lastName || '',
-          role: (r.role || r.Role || 'fan').toLowerCase(),
-          source: 'csv_import',
-          subscribed: true,
-        }},
+        update: {
+          $set: {
+            clubId: req.body.clubId,
+            email: (r.email || r.Email || '').toLowerCase(),
+            firstName: r.first_name || r.FirstName || r.firstName || '',
+            lastName: r.last_name || r.LastName || r.lastName || '',
+            role: (r.role || r.Role || 'fan').toLowerCase(),
+            source: 'csv_import',
+            subscribed: true,
+          }
+        },
         upsert: true,
       },
     }));
