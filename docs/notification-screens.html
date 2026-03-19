@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>RegattaStream — Notifications</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --n900:#070F1F;--n800:#0D1B35;--n700:#13264D;--n600:#1A3366;--n500:#1E4080;
+  --blue:#2256D8;--blue2:#3B6FE8;--blue3:#6B9CF5;
+  --gold:#F0A020;--gold2:#FFB740;
+  --green:#12A150;--red:#D63030;--orange:#E5712A;--teal:#0BA5C2;--purple:#7C3AED;
+  --bg:#EDF0F7;--bg2:#E4E8F2;--card:#FFFFFF;--border:#DCE2F0;
+  --t1:#0D1B35;--t2:#445070;--t3:#8090B0;--t4:#B0BCCC;
+  --sh:0 2px 12px rgba(13,27,53,.09);--sh2:0 6px 24px rgba(13,27,53,.14);
+  --r:14px;--r2:10px;--cond:'Barlow Condensed',sans-serif;--sans:'Inter',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#1C1F3A;font-family:var(--sans);color:var(--t1);overflow:hidden}
+button{font-family:var(--sans);cursor:pointer;border:none;outline:none}
+#root{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px}
+.frame{width:393px;height:852px;background:var(--bg);border-radius:50px;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:0 0 0 11px #0a0a0a,0 0 0 13px #1a1a1a,0 32px 80px rgba(0,0,0,.9)}
+.sb{height:44px;background:var(--n800);display:flex;align-items:center;justify-content:space-between;padding:0 26px;flex-shrink:0}
+.sb-time{font-size:15px;font-weight:600;color:#fff}
+.sb-icons{display:flex;gap:4px;align-items:center;color:#fff;font-size:11px}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden}
+.screen::-webkit-scrollbar{width:0}
+.tnav{height:52px;background:var(--n800);display:flex;align-items:center;padding:0 14px;gap:10px;position:sticky;top:0;z-index:60;flex-shrink:0}
+.tnav-back{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;cursor:pointer}
+.tnav-title{flex:1;font-family:var(--cond);font-size:20px;font-weight:700;color:#fff;letter-spacing:.6px}
+.tnav-act{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;cursor:pointer;position:relative;flex-shrink:0}
+.btn{border-radius:var(--r2);padding:10px 16px;font-size:13px;font-weight:600;width:100%;display:block;text-align:center}
+.btn-p{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff}
+.btn-o{background:transparent;border:1.5px solid var(--border);color:var(--t1)}
+.btn-sm{padding:6px 12px;font-size:11px;border-radius:8px}
+.btn-pill{border-radius:20px}
+.btn-r{background:linear-gradient(135deg,var(--red),#f04040);color:#fff}
+.tag{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.3px}
+.tag-g{background:rgba(18,161,80,.13);color:var(--green)}
+.tag-b{background:rgba(34,86,216,.13);color:var(--blue)}
+.tag-r{background:rgba(214,48,48,.12);color:var(--red)}
+.tag-gold{background:rgba(240,160,32,.15);color:var(--gold)}
+.tag-n{background:var(--bg2);color:var(--t2)}
+.shdr{display:flex;align-items:center;justify-content:space-between;padding:13px 14px 7px}
+.shdr-t{font-family:var(--cond);font-size:14px;font-weight:700;letter-spacing:.6px;color:var(--t3);text-transform:uppercase}
+.shdr-more{font-size:12px;font-weight:600;color:var(--blue);cursor:pointer}
+.li{display:flex;align-items:center;padding:11px 14px;gap:11px;border-bottom:1px solid var(--bg2);cursor:pointer}
+.li:active{background:var(--bg2)}
+.li-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.tog{width:44px;height:26px;background:var(--border);border-radius:13px;position:relative;cursor:pointer;transition:.3s;flex-shrink:0}
+.tog.on{background:var(--blue)}
+.tog-k{width:20px;height:20px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tog.on .tog-k{left:21px}
+.ptabs{display:flex;gap:6px;padding:10px 14px;overflow-x:auto;scrollbar-width:none;background:var(--card);border-bottom:1px solid var(--border)}
+.ptabs::-webkit-scrollbar{display:none}
+.ptab{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--bg);color:var(--t2);border:1.5px solid var(--border);cursor:pointer}
+.ptab.on{background:var(--n700);color:#fff;border-color:var(--n700)}
+.divfull{height:8px;background:var(--bg2)}
+.unread-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0}
+.notif-card{padding:13px 14px;border-bottom:1px solid var(--bg2);cursor:pointer;transition:background .15s;position:relative}
+.notif-card:active{background:var(--bg2)}
+.notif-card.unread{background:rgba(34,86,216,.04)}
+.notif-ico{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.swipe-hint{position:absolute;right:0;top:0;bottom:0;width:70px;background:var(--red);display:flex;align-items:center;justify-content:center;border-radius:0 0 0 0;opacity:0;transition:opacity .2s;color:#fff;font-size:11px;font-weight:700}
+.follow-card{margin:0 14px 9px;background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+.follow-hdr{padding:11px 13px;display:flex;align-items:center;gap:11px}
+.follow-body{padding:0 13px 11px}
+.pref-row{display:flex;align-items:center;padding:11px 14px;gap:12px;border-bottom:1px solid var(--bg2)}
+.pref-grp{background:var(--bg);border-radius:4px;padding:6px 14px;font-family:var(--cond);font-size:12px;font-weight:700;color:var(--t3);letter-spacing:.6px;text-transform:uppercase}
+.ch-box{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:.15s}
+.ch-box.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.quiet-block{margin:0 14px;background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--sh);margin-bottom:10px}
+.slider-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.hour-btn{width:36px;height:36px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--t2);cursor:pointer;flex-shrink:0}
+.hour-btn.on{background:var(--blue);color:#fff}
+.notification-badge{position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:var(--red);border:2px solid var(--n800);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fu{animation:fadeUp .2s ease forwards}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+
+/* ── MOCK DATA ── */
+const MOCK_CLUBS={
+  cal:{id:'cal',name:'Cal Crew',emoji:'🐻',color:'#003262',soRank:3,eloScore:2187},
+  wash:{id:'wash',name:'UW Rowing',emoji:'🐾',color:'#4B2E83',soRank:1,eloScore:2210},
+  yale:{id:'yale',name:'Yale Crew',emoji:'🏛️',color:'#00356B',soRank:2,eloScore:2195},
+};
+
+const TYPE_META={
+  race_results_posted:    {group:'Results',  label:'Race Results',         icon:'🏆', color:'#12A150'},
+  club_podium_finish:     {group:'Results',  label:'Podium Finish',         icon:'🥇', color:'#D4890A'},
+  elo_rank_change:        {group:'Results',  label:'Speed Order Change',    icon:'📊', color:'#2256D8'},
+  race_day_reminder:      {group:'Upcoming', label:'Race Day Reminder',     icon:'🚣', color:'#D63030'},
+  race_week_reminder:     {group:'Upcoming', label:'7-Day Reminder',        icon:'📅', color:'#E5712A'},
+  entries_confirmed:      {group:'Upcoming', label:'Entries Confirmed',     icon:'✅', color:'#12A150'},
+  heat_sheets_posted:     {group:'Upcoming', label:'Heat Sheets Posted',    icon:'📋', color:'#0BA5C2'},
+  live_race_starting:     {group:'Live',     label:'Race Starting Now',     icon:'🔴', color:'#D63030'},
+  crew_chat_message:      {group:'Messages', label:'Chat Message',          icon:'💬', color:'#2256D8'},
+  crew_chat_mention:      {group:'Messages', label:'Mention in Chat',       icon:'@',  color:'#7C3AED'},
+  campaign_sent:          {group:'Admin',    label:'Campaign Sent',         icon:'📧', color:'#12A150'},
+  new_supporter_joined:   {group:'Admin',    label:'New Supporter',         icon:'👥', color:'#0BA5C2'},
+  donation_received:      {group:'Admin',    label:'Donation Received',     icon:'💛', color:'#D4890A'},
+  system_announcement:    {group:'System',   label:'RS Announcement',       icon:'📣', color:'#7C3AED'},
+};
+
+const MOCK_NOTIFS=[
+  {id:'n1',type:'race_results_posted',title:'Cal Crew — PCRCs Results',body:'Finished #1 in Men\'s 8+ — 5:42.1',time:'2m',read:false,data:{screen:'raceDetail'}},
+  {id:'n2',type:'club_podium_finish',title:'🏆 Cal Crew — 1st Place!',body:'Men\'s 8+ Final · 5:42.1 · PCRCs 2026',time:'2m',read:false,data:{screen:'raceDetail'}},
+  {id:'n3',type:'elo_rank_change',title:'Cal Crew Speed Order ▲2',body:'Now ranked #3 nationally (was #5)',time:'3h',read:false,data:{screen:'elo'}},
+  {id:'n4',type:'campaign_sent',title:'📧 Campaign Sent — Cal Crew',body:'Delivered to 312 supporters: "🏆 PCRCs Results"',time:'4h',read:true,data:{screen:'campaigns'}},
+  {id:'n5',type:'race_week_reminder',title:'7 Days Out — Western Championships',body:'Western Rowing Championships · Sacramento, CA · Mar 22',time:'1d',read:true,data:{screen:'upcoming'}},
+  {id:'n6',type:'donation_received',title:'💛 New Donation — Cal Crew',body:'Sarah M. donated $50.00',time:'2d',read:true,data:{screen:'clubDetail'}},
+  {id:'n7',type:'new_supporter_joined',title:'👥 New Supporter — Cal Crew',body:'David K. joined via your share link',time:'2d',read:true,data:{screen:'supporterList'}},
+  {id:'n8',type:'crew_chat_mention',title:'Jordan mentioned you',body:'@you "Can we change practice time tomorrow?"',time:'3d',read:true,data:{screen:'crewChat'}},
+  {id:'n9',type:'heat_sheets_posted',title:'📋 Heat Sheets — Western Championships',body:'Draw posted · Cal Crew: M8+ Heat 1, Lane 3',time:'4d',read:true,data:{screen:'upcoming'}},
+  {id:'n10',type:'entries_confirmed',title:'Entries Confirmed — IRA Nationals',body:'Cal Crew confirmed in M8+ Grand Final',time:'5d',read:true,data:{screen:'upcoming'}},
+];
+
+const MOCK_FOLLOWS=[
+  {id:'f1',targetType:'club',targetId:'cal',target:MOCK_CLUBS.cal,notificationsEnabled:true,overrides:{race_results_posted:true,race_day_reminder:true,live_race_starting:true}},
+  {id:'f2',targetType:'club',targetId:'wash',target:MOCK_CLUBS.wash,notificationsEnabled:true,overrides:{}},
+  {id:'f3',targetType:'club',targetId:'yale',target:MOCK_CLUBS.yale,notificationsEnabled:false,overrides:{}},
+];
+
+/* ── TOGGLE ── */
+const Toggle=({on,onChange})=>(
+  <div className={`tog${on?' on':''}`} onClick={()=>onChange&&onChange(!on)}><div className="tog-k"/></div>
+);
+
+const Checkbox=({on,onChange})=>(
+  <div className={`ch-box${on?' on':''}`} onClick={()=>onChange&&onChange(!on)}>
+    {on&&<span style={{fontSize:12,color:'#fff'}}>✓</span>}
+  </div>
+);
+
+/* ══════════════════════════════════════════
+   SCREEN: NOTIFICATION INBOX
+══════════════════════════════════════════ */
+const NotifInbox=({nav})=>{
+  const [notifs,setNotifs]=useState(MOCK_NOTIFS);
+  const [tab,setTab]=useState('all');
+  const [swipedId,setSwipedId]=useState(null);
+  const unreadCount=notifs.filter(n=>!n.read&&!n.dismissed).length;
+
+  const shown=notifs.filter(n=>{
+    if(n.dismissed)return false;
+    if(tab==='unread')return !n.read;
+    if(tab==='results')return ['race_results_posted','club_podium_finish','elo_rank_change'].includes(n.type);
+    if(tab==='upcoming')return ['race_day_reminder','race_week_reminder','entries_confirmed','heat_sheets_posted','live_race_starting'].includes(n.type);
+    if(tab==='messages')return ['crew_chat_message','crew_chat_mention'].includes(n.type);
+    return true;
+  });
+
+  const markRead=(id)=>setNotifs(ns=>ns.map(n=>n.id===id?{...n,read:true}:n));
+  const markAllRead=()=>setNotifs(ns=>ns.map(n=>({...n,read:true})));
+  const dismiss=(id)=>setNotifs(ns=>ns.map(n=>n.id===id?{...n,dismissed:true}:n));
+  const deleteOld=(days)=>setNotifs(ns=>ns.filter(n=>{
+    const hoursAgo=parseInt(n.time)||0;
+    return n.time.includes('m')||n.time.includes('h')||(n.time.includes('d')&&parseInt(n.time)<days);
+  }));
+
+  const meta=(type)=>TYPE_META[type]||{icon:'🔔',color:'#2256D8',label:type};
+
+  return (
+    <div style={{height:'100%',overflowY:'auto'}}>
+      {/* nav */}
+      <div style={{background:'var(--n800)',padding:'11px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:60}}>
+        <div>
+          <div style={{fontFamily:'var(--cond)',fontSize:22,fontWeight:900,color:'#fff',letterSpacing:.8}}>
+            NOTIFICATIONS{unreadCount>0&&<span style={{marginLeft:8,fontSize:14,background:'var(--red)',color:'#fff',borderRadius:10,padding:'1px 7px',fontWeight:700}}>{unreadCount}</span>}
+          </div>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          <button style={{background:'rgba(255,255,255,.1)',border:'none',borderRadius:8,color:'rgba(255,255,255,.7)',fontSize:11,fontWeight:600,padding:'5px 10px',cursor:'pointer'}} onClick={markAllRead}>Mark all read</button>
+          <div className="tnav-act" onClick={()=>nav('notifSettings')}>⚙️</div>
+        </div>
+      </div>
+
+      {/* tabs */}
+      <div className="ptabs">
+        {[['all','All'],['unread','Unread'],['results','Results'],['upcoming','Upcoming'],['messages','Messages']].map(([k,l])=>(
+          <button key={k} className={`ptab${tab===k?' on':''}`} onClick={()=>setTab(k)}>{l}</button>
+        ))}
+      </div>
+
+      {/* bulk actions */}
+      <div style={{background:'var(--card)',borderBottom:'1px solid var(--border)',padding:'8px 14px',display:'flex',gap:7}}>
+        <button className="btn btn-o btn-sm btn-pill" onClick={()=>deleteOld(7)}>🗑️ Delete 7+ days</button>
+        <button className="btn btn-o btn-sm btn-pill" onClick={()=>deleteOld(30)}>🗑️ Delete 30+ days</button>
+        <button className="btn btn-o btn-sm btn-pill" style={{color:'var(--red)',borderColor:'var(--red)'}} onClick={()=>setNotifs(ns=>ns.filter(n=>!n.dismissed))}>Clear dismissed</button>
+      </div>
+
+      {/* notification list */}
+      {shown.length===0&&(
+        <div style={{padding:'48px 20px',textAlign:'center',color:'var(--t3)'}}>
+          <div style={{fontSize:48,marginBottom:12}}>🔔</div>
+          <div style={{fontSize:14,fontWeight:600}}>No notifications</div>
+          <div style={{fontSize:12,marginTop:4}}>You're all caught up</div>
+        </div>
+      )}
+      {shown.map((n,i)=>{
+        const m=meta(n.type);
+        const swiped=swipedId===n.id;
+        return (
+          <div key={n.id} className={`notif-card${n.read?'':' unread'} fu`} style={{animationDelay:`${i*30}ms`}}
+            onClick={()=>{markRead(n.id);setSwipedId(null);}}>
+            <div style={{display:'flex',gap:11,alignItems:'flex-start'}}>
+              {/* unread dot */}
+              <div style={{width:8,height:8,borderRadius:50,background:n.read?'transparent':'var(--blue)',marginTop:6,flexShrink:0}}/>
+              {/* icon */}
+              <div className="notif-ico" style={{background:`${m.color}18`}}>
+                <span style={{fontSize:20}}>{m.icon}</span>
+              </div>
+              {/* content */}
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:n.read?500:700,color:'var(--t1)',lineHeight:1.3}}>{n.title}</div>
+                <div style={{fontSize:12,color:'var(--t2)',marginTop:3,lineHeight:1.4}}>{n.body}</div>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginTop:5}}>
+                  <span style={{fontSize:10,color:'var(--t4)'}}>{n.time} ago</span>
+                  <div className="tag" style={{background:`${m.color}15`,color:m.color,fontSize:9}}>{m.label}</div>
+                </div>
+              </div>
+              {/* actions */}
+              <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+                <button style={{width:28,height:28,borderRadius:50,background:'var(--bg)',border:'none',cursor:'pointer',fontSize:13,color:'var(--t3)'}} onClick={e=>{e.stopPropagation();dismiss(n.id);}}>✕</button>
+                {!n.read&&<button style={{width:28,height:28,borderRadius:50,background:'var(--bg)',border:'none',cursor:'pointer',fontSize:11,color:'var(--blue)',fontWeight:700}} onClick={e=>{e.stopPropagation();markRead(n.id);}}>✓</button>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      <div style={{height:20}}/>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════
+   SCREEN: NOTIFICATION SETTINGS
+══════════════════════════════════════════ */
+const NotifSettings=({nav})=>{
+  const [master,setMaster]=useState({push:true,inApp:true,email:false});
+  const [quiet,setQuiet]=useState({enabled:false,start:22,end:7});
+  const [tab,setTab]=useState('channels');
+
+  const GROUPS={
+    Results:[
+      {k:'race_results_posted',   label:'Race Results Posted',   desc:'When results land for a club you follow'},
+      {k:'club_podium_finish',    label:'Podium Finish Alert',   desc:'Top-3 finish for any followed club'},
+      {k:'elo_rank_change',       label:'Speed Order Change',    desc:'Club moves ≥3 places nationally'},
+    ],
+    Upcoming:[
+      {k:'race_day_reminder',     label:'Race Day Reminder',     desc:'Morning of race day'},
+      {k:'race_week_reminder',    label:'7-Day Reminder',        desc:'One week before race'},
+      {k:'entries_confirmed',     label:'Entries Confirmed',     desc:'Club confirms entries at a regatta'},
+      {k:'heat_sheets_posted',    label:'Heat Sheets Posted',    desc:'Draw available for followed regatta'},
+      {k:'live_race_starting',    label:'Race Starting Now',     desc:'~10 min before crew launches'},
+    ],
+    Live:[
+      {k:'live_race_starting',    label:'Live Race Alert',       desc:'Real-time alert when race goes live'},
+    ],
+    Messages:[
+      {k:'crew_chat_message',     label:'Chat Messages',         desc:'New messages in your crew chats'},
+      {k:'crew_chat_mention',     label:'@Mentions',             desc:'When someone mentions you in chat'},
+    ],
+    Admin:[
+      {k:'campaign_sent',         label:'Campaign Sent',         desc:'Confirmation when your campaign delivers'},
+      {k:'new_supporter_joined',  label:'New Supporter',         desc:'Someone joins your supporter list'},
+      {k:'donation_received',     label:'Donation Received',     desc:'New donation to your club'},
+    ],
+    System:[
+      {k:'system_announcement',   label:'RS Announcements',      desc:'New features and important updates'},
+    ],
+  };
+
+  // Per-type state: { type: { push, inApp, email } }
+  const defaultTypePrefs=Object.fromEntries(Object.values(GROUPS).flat().map(t=>([t.k,{push:true,inApp:true,email:false}])));
+  const [typePrefs,setTypePrefs]=useState(defaultTypePrefs);
+  const setTypePref=(k,ch,val)=>setTypePrefs(p=>({...p,[k]:{...p[k],[ch]:val}}));
+
+  return (
+    <div style={{height:'100%',overflowY:'auto'}}>
+      <div className="tnav"><div className="tnav-back" onClick={()=>nav('notifications')}>‹</div><div className="tnav-title">NOTIFICATION SETTINGS</div></div>
+
+      {/* master switches */}
+      <div style={{background:'linear-gradient(135deg,var(--n800),var(--n600))',padding:'14px'}}>
+        <div style={{fontFamily:'var(--cond)',fontSize:16,fontWeight:700,color:'#fff',letterSpacing:.6,marginBottom:12}}>DELIVERY CHANNELS</div>
+        {[
+          {k:'push',label:'Push Notifications',icon:'📱',sub:'Alerts sent to your device'},
+          {k:'inApp',label:'In-App Notifications',icon:'🔔',sub:'Inbox inside RegattaStream'},
+          {k:'email',label:'Email Digest',icon:'📧',sub:'Summary emails (separate from campaigns)'},
+        ].map(ch=>(
+          <div key={ch.k} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid rgba(255,255,255,.08)'}}>
+            <div style={{fontSize:22}}>{ch.icon}</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:600,color:'#fff'}}>{ch.label}</div>
+              <div style={{fontSize:11,color:'rgba(255,255,255,.5)'}}>{ch.sub}</div>
+            </div>
+            <Toggle on={master[ch.k]} onChange={v=>setMaster(m=>({...m,[ch.k]:v}))}/>
+          </div>
+        ))}
+      </div>
+
+      {/* quiet hours */}
+      <div style={{padding:'12px 14px',background:'var(--card)',borderBottom:'1px solid var(--border)'}}>
+        <div style={{display:'flex',alignItems:'center',marginBottom:quiet.enabled?12:0}}>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:700}}>🌙 Quiet Hours</div>
+            <div style={{fontSize:11,color:'var(--t3)'}}>Pause push during these hours</div>
+          </div>
+          <Toggle on={quiet.enabled} onChange={v=>setQuiet(q=>({...q,enabled:v}))}/>
+        </div>
+        {quiet.enabled&&(
+          <div style={{background:'var(--bg)',borderRadius:var(--r2),padding:'12px',marginTop:8}}>
+            {[['Start (do not disturb from)',quiet.start,v=>setQuiet(q=>({...q,start:v}))],
+              ['End (resume notifications at)',quiet.end,v=>setQuiet(q=>({...q,end:v}))]].map(([label,val,setter])=>(
+              <div key={label} style={{marginBottom:10}}>
+                <div style={{fontSize:11,fontWeight:600,color:'var(--t3)',marginBottom:7,textTransform:'uppercase',letterSpacing:.4}}>{label}</div>
+                <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                  {[20,21,22,23,0,1,2,3,4,5,6,7,8].map(h=>(
+                    <div key={h} className={`hour-btn${val===h?' on':''}`} onClick={()=>setter(h)}
+                      style={{width:40,height:32,borderRadius:8,background:val===h?'var(--blue)':'var(--card)',color:val===h?'#fff':'var(--t2)',fontSize:11,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',border:`1.5px solid ${val===h?'var(--blue)':'var(--border)'}`}}>
+                      {h===0?'12a':h<12?`${h}a`:h===12?'12p':`${h-12}p`}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* per-type prefs */}
+      <div className="ptabs" style={{background:'var(--bg2)'}}>
+        <button className={`ptab${tab==='channels'?' on':''}`} onClick={()=>setTab('channels')}>By Channel</button>
+        <button className={`ptab${tab==='type'?' on':''}`} onClick={()=>setTab('type')}>By Type</button>
+      </div>
+
+      {tab==='channels'&&(
+        <div>
+          {Object.entries(GROUPS).map(([group,types])=>(
+            <div key={group}>
+              <div className="pref-grp">{group}</div>
+              {types.map(t=>{
+                const p=typePrefs[t.k]||{push:true,inApp:true,email:false};
+                const m=TYPE_META[t.k]||{};
+                return (
+                  <div key={t.k} style={{padding:'11px 14px',borderBottom:'1px solid var(--bg2)'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:7}}>
+                      <div style={{width:28,height:28,borderRadius:8,background:`${m.color||'#2256D8'}18`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>{m.icon||'🔔'}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:600}}>{t.label}</div>
+                        <div style={{fontSize:11,color:'var(--t3)'}}>{t.desc}</div>
+                      </div>
+                    </div>
+                    <div style={{display:'flex',gap:16,paddingLeft:38}}>
+                      {[['push','📱 Push',master.push],['inApp','🔔 In-App',master.inApp],['email','📧 Email',master.email]].map(([ch,lbl,masterOn])=>(
+                        <div key={ch} style={{display:'flex',alignItems:'center',gap:5,opacity:masterOn?1:.4}}>
+                          <Checkbox on={p[ch]&&masterOn} onChange={v=>masterOn&&setTypePref(t.k,ch,v)}/>
+                          <span style={{fontSize:11,color:'var(--t2)'}}>{lbl}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab==='type'&&(
+        <div>
+          {Object.entries(GROUPS).map(([group,types])=>(
+            <div key={group}>
+              <div className="pref-grp">{group}</div>
+              {types.map(t=>{
+                const p=typePrefs[t.k]||{push:true,inApp:true,email:false};
+                const anyOn=p.push||p.inApp||p.email;
+                const m=TYPE_META[t.k]||{};
+                return (
+                  <div key={t.k} className="pref-row">
+                    <div style={{width:32,height:32,borderRadius:9,background:`${m.color||'#2256D8'}18`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{m.icon||'🔔'}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:600}}>{t.label}</div>
+                      <div style={{fontSize:11,color:'var(--t3)',marginTop:1}}>{t.desc}</div>
+                      {anyOn&&<div style={{display:'flex',gap:5,marginTop:4}}>
+                        {p.push&&master.push&&<span className="tag tag-b" style={{fontSize:9}}>📱 Push</span>}
+                        {p.inApp&&master.inApp&&<span className="tag tag-n" style={{fontSize:9}}>🔔 In-App</span>}
+                        {p.email&&master.email&&<span className="tag tag-g" style={{fontSize:9}}>📧 Email</span>}
+                      </div>}
+                    </div>
+                    <Toggle on={anyOn} onChange={v=>setTypePrefs(prev=>({...prev,[t.k]:{push:v,inApp:v,email:false}}))}/>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{padding:'14px'}}>
+        <button className="btn btn-p" onClick={()=>nav('notifications')}>Save Preferences</button>
+      </div>
+      <div style={{height:20}}/>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════
+   SCREEN: FOLLOW MANAGER
+══════════════════════════════════════════ */
+const FollowManager=({nav})=>{
+  const [follows,setFollows]=useState(MOCK_FOLLOWS);
+  const [expandedId,setExpandedId]=useState(null);
+  const toggleMute=(id)=>setFollows(fs=>fs.map(f=>f.id===id?{...f,notificationsEnabled:!f.notificationsEnabled}:f));
+  const unfollow=(id)=>setFollows(fs=>fs.filter(f=>f.id!==id));
+  const setOverride=(fid,k,v)=>setFollows(fs=>fs.map(f=>f.id===fid?{...f,overrides:{...f.overrides,[k]:v}}:f));
+
+  const PER_FOLLOW_TYPES=[
+    {k:'race_results_posted',label:'Race Results',icon:'🏆'},
+    {k:'race_day_reminder',label:'Race Day',icon:'🚣'},
+    {k:'race_week_reminder',label:'7-Day Reminder',icon:'📅'},
+    {k:'heat_sheets_posted',label:'Heat Sheets',icon:'📋'},
+    {k:'live_race_starting',label:'Live Race Alert',icon:'🔴'},
+    {k:'elo_rank_change',label:'ELO Changes',icon:'📊'},
+  ];
+
+  return (
+    <div style={{height:'100%',overflowY:'auto'}}>
+      <div className="tnav"><div className="tnav-back" onClick={()=>nav('notifSettings')}>‹</div><div className="tnav-title">FOLLOWING</div><div className="tnav-act" onClick={()=>nav('clubs')}>＋</div></div>
+
+      <div style={{padding:'10px 14px',background:'var(--card)',borderBottom:'1px solid var(--border)',fontSize:12,color:'var(--t2)'}}>
+        {follows.length} club{follows.length!==1?'s':''} followed · Tap to customize notifications
+      </div>
+
+      {follows.map(f=>{
+        const c=f.target;
+        const isExpanded=expandedId===f.id;
+        return (
+          <div key={f.id} className="follow-card">
+            <div className="follow-hdr">
+              <div style={{width:46,height:46,borderRadius:13,background:c.color||'#0D1F3C',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0}}>{c.emoji}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:700}}>{c.name}</div>
+                <div style={{fontSize:11,color:'var(--t3)'}}>#{c.soRank} Speed Order · {c.eloScore} ELO</div>
+              </div>
+              <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                <button style={{padding:'5px 10px',borderRadius:20,fontSize:11,fontWeight:700,
+                  background:f.notificationsEnabled?'rgba(34,86,216,.1)':'var(--bg)',
+                  color:f.notificationsEnabled?'var(--blue)':'var(--t3)',border:`1.5px solid ${f.notificationsEnabled?'var(--blue)':'var(--border)'}`,cursor:'pointer'}}
+                  onClick={()=>toggleMute(f.id)}>
+                  {f.notificationsEnabled?'🔔 On':'🔕 Muted'}
+                </button>
+                <button style={{width:28,height:28,borderRadius:50,background:'var(--bg)',border:'none',fontSize:14,color:'var(--t3)',cursor:'pointer'}}
+                  onClick={()=>setExpandedId(isExpanded?null:f.id)}>
+                  {isExpanded?'▲':'▼'}
+                </button>
+              </div>
+            </div>
+
+            {isExpanded&&(
+              <div className="follow-body">
+                <div style={{fontSize:11,fontWeight:700,color:'var(--t3)',textTransform:'uppercase',letterSpacing:.5,marginBottom:10}}>Notification Overrides for {c.name}</div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:7}}>
+                  {PER_FOLLOW_TYPES.map(t=>{
+                    const on=f.overrides[t.k]!==false&&f.notificationsEnabled;
+                    return (
+                      <div key={t.k} onClick={()=>setOverride(f.id,t.k,!on)}
+                        style={{display:'flex',alignItems:'center',gap:6,padding:'7px 11px',borderRadius:8,cursor:'pointer',
+                          background:on?'rgba(34,86,216,.09)':'var(--bg)',
+                          border:`1.5px solid ${on?'var(--blue)':'var(--border)'}`,
+                          opacity:f.notificationsEnabled?1:.4}}>
+                        <span style={{fontSize:14}}>{t.icon}</span>
+                        <span style={{fontSize:11,fontWeight:600,color:on?'var(--blue)':'var(--t2)'}}>{t.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button className="btn btn-o btn-sm" style={{marginTop:12,color:'var(--red)',borderColor:'var(--red)'}} onClick={()=>unfollow(f.id)}>
+                  Unfollow {c.name}
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {follows.length===0&&(
+        <div style={{padding:'48px 20px',textAlign:'center',color:'var(--t3)'}}>
+          <div style={{fontSize:48,marginBottom:12}}>🔍</div>
+          <div style={{fontSize:14,fontWeight:600}}>No clubs followed</div>
+          <div style={{fontSize:12,marginTop:4,marginBottom:16}}>Follow clubs to get race alerts</div>
+          <button className="btn btn-p" style={{maxWidth:200,margin:'0 auto'}} onClick={()=>nav('clubs')}>Find Clubs</button>
+        </div>
+      )}
+
+      <div style={{height:20}}/>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════
+   APP
+══════════════════════════════════════════ */
+const SCREENS={notifications:NotifInbox,notifSettings:NotifSettings,follows:FollowManager};
+
+export default function App(){
+  const [screen,setScreen]=useState('notifications');
+  const nav=(to)=>setScreen(to);
+  const Sc=SCREENS[screen]||NotifInbox;
+  return (
+    <div className="frame">
+      <div className="sb"><div className="sb-time">9:41</div><div className="sb-icons"><span>●●●</span><span>WiFi</span><span>▓</span></div></div>
+      <div className="screen"><Sc nav={nav}/></div>
+    </div>
+  );
+}
+
+const root=ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
+</body>
+</html>
