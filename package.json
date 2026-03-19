@@ -2,10 +2,10 @@
   "name": "regattastream-backend",
   "version": "2.0.0",
   "description": "RegattaStream — Node.js/Express/MongoDB backend. Race results, ELO rankings, email campaigns, supporter lists.",
-  "main": "src/server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js --ignore uploads/",
+    "start": "node index.js",
+    "dev": "nodemon index.js --ignore uploads/",
     "seed": "node src/scripts/seed.js",
     "seed:timing": "node src/scripts/seedTiming.js",
     "test": "jest --runInBand",
@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "jest": "^29.7.0",
+    "mongodb-memory-server": "^11.0.1",
     "nodemon": "^3.0.2",
     "supertest": "^6.3.4"
   }
