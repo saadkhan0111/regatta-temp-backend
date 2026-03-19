@@ -73,10 +73,13 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
 const { User, Club, Regatta, Race, EloHistory, Campaign, Supporter, ErgSession, BoatBay } = require('../models/index');
 const { ingest, ingestCSV } = require('../services/dataAggregator');
 const { processRace, computeSpeedOrder } = require('../services/eloEngine');
 const campaignService = require('../services/campaignService');
+
+const upload = multer({ dest: process.env.UPLOAD_DIR || './uploads', limits: { fileSize: 25 * 1024 * 1024 } });
 
 // ── AUTH MIDDLEWARE ─────────────────────────────────────────────
 function auth(req, res, next) {

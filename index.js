@@ -10,6 +10,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const cron = require('node-cron');
 const app = express();
 
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -48,39 +49,39 @@ async function connectDB() {
   }
 }
 
-// function startCronJobs() {
-//   const { ingest } = require('./src/services/dataAggregator');
-//   const notifSvc = require('./src/services/notificationService');
-//   const { Club } = require('./src/models');
-//   const { computeSpeedOrder } = require('./src/services/eloEngine');
-//   cron.schedule(`*/${process.env.SYNC_HERENOW_INTERVAL || 2} * * * *`, async () => { try { await ingest('HereNOW'); } catch (e) { console.error('[CRON][HN]', e.message); } });
-//   cron.schedule(`*/${process.env.SYNC_REGATTACENTRAL_INTERVAL || 5} * * * *`, async () => { try { await ingest('RegattaCentral'); } catch (e) { console.error('[CRON][RC]', e.message); } });
-//   cron.schedule('*/10 * * * *', async () => { try { await ingest('CrewTimer'); } catch (e) { console.error('[CRON][CT]', e.message); } });
-//   cron.schedule('*/30 * * * *', async () => {
-//     try {
-//       const clubs = await Club.find({}, '_id eloScore soRank').lean();
-//       const ranked = computeSpeedOrder(clubs.map(c => ({ clubId: c._id, eloScore: c.eloScore })));
-//       for (const r of ranked) {
-//         const old = clubs.find(c => c._id.toString() === r.clubId.toString());
-//         await Club.findByIdAndUpdate(r.clubId, { soRank: r.soRank });
-//         if (old && old.soRank && Math.abs(old.soRank - r.soRank) >= 3) {
-//           await notifSvc.notifyEloRankChange(r.clubId, old.soRank, r.soRank);
-//         }
-//       }
-//     } catch (e) { console.error('[CRON][ELO]', e.message); }
-//   });
-//   cron.schedule('0 6 * * *', async () => {
-//     try { await notifSvc.sendRaceDayReminders(); await notifSvc.sendRaceWeekReminders(); console.log('[CRON] Reminders sent'); }
-//     catch (e) { console.error('[CRON][Remind]', e.message); }
-//   });
-//   cron.schedule('0 3 * * 0', async () => {
-//     try { const { PushToken } = require('./src/models/notifications'); await PushToken.updateMany({ failCount: { $gte: 3 } }, { active: false }); const cutoff = new Date(Date.now() - 180 * 24 * 3600 * 1000); await PushToken.deleteMany({ active: false, updatedAt: { $lt: cutoff } }); } catch (e) { console.error('[CRON][Tokens]', e.message); }
-//   });
-//   cron.schedule('0 4 * * *', async () => {
-//     try { const { Notification } = require('./src/models/notifications'); const cutoff = new Date(Date.now() - 7 * 24 * 3600 * 1000); await Notification.deleteMany({ dismissed: true, dismissedAt: { $lt: cutoff } }); } catch (e) { console.error('[CRON][Notifs]', e.message); }
-//   });
-//   console.log('[CRON] All jobs scheduled');
-// }
+function startCronJobs() {
+  const { ingest } = require('./src/services/dataAggregator');
+  const notifSvc = require('./src/services/notificationService');
+  const { Club } = require('./src/models');
+  const { computeSpeedOrder } = require('./src/services/eloEngine');
+  cron.schedule(`*/${process.env.SYNC_HERENOW_INTERVAL || 2} * * * *`, async () => { try { await ingest('HereNOW'); } catch (e) { console.error('[CRON][HN]', e.message); } });
+  cron.schedule(`*/${process.env.SYNC_REGATTACENTRAL_INTERVAL || 5} * * * *`, async () => { try { await ingest('RegattaCentral'); } catch (e) { console.error('[CRON][RC]', e.message); } });
+  cron.schedule('*/10 * * * *', async () => { try { await ingest('CrewTimer'); } catch (e) { console.error('[CRON][CT]', e.message); } });
+  cron.schedule('*/30 * * * *', async () => {
+    try {
+      const clubs = await Club.find({}, '_id eloScore soRank').lean();
+      const ranked = computeSpeedOrder(clubs.map(c => ({ clubId: c._id, eloScore: c.eloScore })));
+      for (const r of ranked) {
+        const old = clubs.find(c => c._id.toString() === r.clubId.toString());
+        await Club.findByIdAndUpdate(r.clubId, { soRank: r.soRank });
+        if (old && old.soRank && Math.abs(old.soRank - r.soRank) >= 3) {
+          await notifSvc.notifyEloRankChange(r.clubId, old.soRank, r.soRank);
+        }
+      }
+    } catch (e) { console.error('[CRON][ELO]', e.message); }
+  });
+  cron.schedule('0 6 * * *', async () => {
+    try { await notifSvc.sendRaceDayReminders(); await notifSvc.sendRaceWeekReminders(); console.log('[CRON] Reminders sent'); }
+    catch (e) { console.error('[CRON][Remind]', e.message); }
+  });
+  cron.schedule('0 3 * * 0', async () => {
+    try { const { PushToken } = require('./src/models/notifications'); await PushToken.updateMany({ failCount: { $gte: 3 } }, { active: false }); const cutoff = new Date(Date.now() - 180 * 24 * 3600 * 1000); await PushToken.deleteMany({ active: false, updatedAt: { $lt: cutoff } }); } catch (e) { console.error('[CRON][Tokens]', e.message); }
+  });
+  cron.schedule('0 4 * * *', async () => {
+    try { const { Notification } = require('./src/models/notifications'); const cutoff = new Date(Date.now() - 7 * 24 * 3600 * 1000); await Notification.deleteMany({ dismissed: true, dismissedAt: { $lt: cutoff } }); } catch (e) { console.error('[CRON][Notifs]', e.message); }
+  });
+  console.log('[CRON] All jobs scheduled');
+}
 
 // Vercel export vs Local execution
 if (process.env.VERCEL) {
@@ -90,7 +91,7 @@ if (process.env.VERCEL) {
   // Local Development
   async function start() {
     await connectDB();
-    // startCronJobs(); 
+    startCronJobs();
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => { console.log(`[Server] RegattaStream v2.1 on port ${PORT}`); });
   }
